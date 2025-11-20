@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Push Game - Risk & Reward</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card {
+            background: #0d1117;
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(88, 166, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 40px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #8b949e;
+            font-size: 14px;
+        }
+
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #58a6ff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            padding: 14px 16px;
+            border: 2px solid rgba(88, 166, 255, 0.2);
+            border-radius: 15px;
+            background: rgba(88, 166, 255, 0.05);
+            color: #c9d1d9;
+            font-size: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #58a6ff;
+            background: rgba(88, 166, 255, 0.1);
+            box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+        }
+
+        input::placeholder {
+            color: #6e7681;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(88, 166, 255, 0.2);
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .user-info p {
+            color: #8b949e;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .user-info strong {
+            color: #58a6ff;
+        }
+
+        .game-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(88, 166, 255, 0.08);
+            border: 2px solid rgba(88, 166, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #8b949e;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+
+        .points-display {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .current-points {
+            font-size: 16px;
+            color: #8b949e;
+            margin-bottom: 20px;
+        }
+
+        .big-number {
+            font-size: 80px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .risk-warning {
+            color: #f85149;
+            font-size: 14px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #58a6ff, #1f6feb);
+            color: #0d1117;
+            box-shadow: 0 5px 20px rgba(88, 166, 255, 0.3);
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(88, 166, 255, 0.4);
+        }
+
+        .btn-continue {
+            background: linear-gradient(135deg, #3fb950, #2ea043);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(63, 185, 80, 0.3);
+        }
+
+        .btn-continue:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(63, 185, 80, 0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #f85149, #da3633);
+            color: #fff;
+            box-shadow: 0 5px 20px rgba(248, 81, 73, 0.3);
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(248, 81, 73, 0.4);
+        }
+
+        .btn-logout {
+            background: rgba(248, 81, 73, 0.1);
+            color: #f85149;
+            border: 2px solid rgba(248, 81, 73, 0.3);
+            font-size: 13px;
+            padding: 10px 16px;
+            flex: 0;
+            width: auto;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideIn 0.3s ease;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.error {
+            background: rgba(248, 81, 73, 0.15);
+            border: 2px solid rgba(248, 81, 73, 0.4);
+            color: #f85149;
+        }
+
+        .message.success {
+            background: rgba(63, 185, 80, 0.15);
+            border: 2px solid rgba(63, 185, 80, 0.4);
+            color: #3fb950;
+        }
+
+        .message.warning {
+            background: rgba(247, 161, 58, 0.15);
+            border: 2px solid rgba(247, 161, 58, 0.4);
+            color: #f7a13a;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .game-over-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .game-over-screen.show {
+            display: block;
+        }
+
+        .game-over-message {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 30px 0;
+            color: #58a6ff;
+        }
+
+        .game-over-details {
+            background: rgba(88, 166, 255, 0.1);
+            border: 2px solid rgba(88, 166, 255, 0.2);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        .game-over-details div {
+            margin: 15px 0;
+            color: #c9d1d9;
+        }
+
+        .game-over-details strong {
+            color: #58a6ff;
+            font-size: 24px;
+        }
+
+        .leaderboard {
+            background: rgba(88, 166, 255, 0.08);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .leaderboard h3 {
+            color: #58a6ff;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(88, 166, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .leaderboard-score {
+            color: #58a6ff;
+            font-weight: 700;
+        }
+
+        .global-leaderboard {
+            background: rgba(88, 166, 255, 0.08);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+
+        .global-leaderboard h3 {
+            color: #58a6ff;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .global-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(88, 166, 255, 0.1);
+            font-size: 14px;
+        }
+
+        .global-item:last-child {
+            border-bottom: none;
+        }
+
+        .global-player-name {
+            color: #c9d1d9;
+            font-weight: 600;
+        }
+
+        .global-player-score {
+            color: #58a6ff;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .medal {
+            margin-right: 8px;
+        }
+
+        @media (max-width: 480px) {
+            .card {
+                padding: 25px;
+                border-radius: 30px;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            .big-number {
+                font-size: 60px;
+            }
+
+            button {
+                padding: 14px;
+                font-size: 14px;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+
+            .game-stats {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+                border-radius: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🎯 Push Game</h1>
+                <p>Wie weit wagst du dich?</p>
+            </div>
+
+            <div id="message" class="message"></div>
+
+            <!-- Login Screen -->
+            <div id="loginScreen" class="login-screen">
+                <div style="text-align: center; margin-bottom: 30px; color: #8b949e;">
+                    <p style="font-size: 14px; line-height: 1.6;">Melde dich an um deine High Scores zu speichern!</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Benutzername</label>
+                    <input type="text" id="username" placeholder="Dein Benutzername...">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Passwort</label>
+                    <input type="password" id="password" placeholder="Dein Passwort...">
+                </div>
+
+                <button class="btn-primary" onclick="login()">🚀 Anmelden / Registrieren</button>
+
+                <p style="text-align: center; color: #8b949e; font-size: 12px; margin-top: 20px;">
+                    💡 Tipp: Gib einen Namen und Passwort ein. Beim ersten Mal wird ein Account erstellt.
+                </p>
+            </div>
+
+            <!-- Game Screen -->
+            <div id="gameScreen" class="game-screen">
+                <div class="game-header">
+                    <div>
+                        <h2 style="color: #58a6ff; font-size: 20px;">🎮 Spiel</h2>
+                    </div>
+                    <div class="user-info">
+                        <p>Spieler: <strong id="displayUsername">Guest</strong></p>
+                        <button class="btn-logout" onclick="logout()">Abmelden</button>
+                    </div>
+                </div>
+
+                <div class="game-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Gesamt Punkte</div>
+                        <div class="stat-value" id="totalScore">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Runden</div>
+                        <div class="stat-value" id="roundCount">0</div>
+                    </div>
+                </div>
+
+                <div id="activeGameScreen">
+                    <div class="points-display">
+                        <div class="current-points">💰 Punkte diese Runde</div>
+                        <div class="big-number" id="roundPoints">0</div>
+                        <div class="risk-warning" id="riskWarning" style="display: none;">⚠️ Hohes Risiko! Ein Fehler kostet alles!</div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn-continue" id="continueBtn" onclick="addPoints()">➕ Weiter</button>
+                        <button class="btn-stop" id="stopBtn" onclick="stopRound()">⏹️ Stopp</button>
+                    </div>
+                </div>
+
+                <div id="gameOverScreen" class="game-over-screen">
+                    <div class="game-over-message" id="gameOverMsg">🎉 Runde beendet!</div>
+                    <div class="game-over-details">
+                        <div>Punkte diese Runde: <strong id="finalRoundScore">0</strong></div>
+                        <div style="margin-top: 15px; font-size: 16px; color: #8b949e;" id="gameOverExtraInfo"></div>
+                    </div>
+                    <button class="btn-primary" onclick="newRound()">▶ Nächste Runde</button>
+                </div>
+
+                <div class="leaderboard">
+                    <h3>🏆 Deine Best-Scores</h3>
+                    <div id="leaderboardList">
+                        <div class="leaderboard-item">
+                            <span>Noch keine Scores...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="global-leaderboard">
+                    <h3>🌍 Globale Top Scores</h3>
+                    <div id="globalLeaderboard">
+                        <div class="global-item">
+                            <span>Laden...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let roundPoints = 0;
+        let totalScore = 0;
+        let roundCount = 0;
+        let gameActive = true;
+        let bestScores = [];
+        let banCheckInterval = null;
+        let windowFocused = true;
+
+        const USERS_KEY = 'push_game_users';
+        const SCORES_KEY = 'push_game_scores';
+        const GLOBAL_SCORES_KEY = 'push_game_global_scores';
+
+        function getUsers() {
+            return JSON.parse(localStorage.getItem(USERS_KEY) || '{}');
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+
+        function getUserScores(username) {
+            return JSON.parse(localStorage.getItem(`${SCORES_KEY}_${username}`) || '[]');
+        }
+
+        function saveUserScores(username, scores) {
+            localStorage.setItem(`${SCORES_KEY}_${username}`, JSON.stringify(scores));
+        }
+
+        function getGlobalScores() {
+            return JSON.parse(localStorage.getItem(GLOBAL_SCORES_KEY) || '[]');
+        }
+
+        function saveGlobalScores(scores) {
+            localStorage.setItem(GLOBAL_SCORES_KEY, JSON.stringify(scores));
+        }
+
+        function addGlobalScore(username, score) {
+            let globalScores = getGlobalScores();
+            // Entferne alte Scores des gleichen Spielers aus dieser Session
+            globalScores = globalScores.filter(s => s.username !== username || s.date !== globalScores.find(gs => gs.username === username)?.date);
+            globalScores.push({ username, score, date: new Date().toLocaleString('de-DE') });
+            globalScores.sort((a, b) => b.score - a.score);
+            // Behalte nur Top 50
+            globalScores = globalScores.slice(0, 50);
+            saveGlobalScores(globalScores);
+        }
+
+        function updateGlobalLeaderboard() {
+            const globalScores = getGlobalScores();
+            const leaderboardDiv = document.getElementById('globalLeaderboard');
+            
+            if (globalScores.length === 0) {
+                leaderboardDiv.innerHTML = '<div class="global-item"><span>Noch keine Scores...</span></div>';
+                return;
+            }
+
+            leaderboardDiv.innerHTML = globalScores.slice(0, 10).map((item, idx) => {
+                const medals = ['🥇', '🥈', '🥉'];
+                const medal = medals[idx] || (idx + 1);
+                return `
+                    <div class="global-item">
+                        <div>
+                            <span class="medal">${medal}</span>
+                            <span class="global-player-name">${item.username}</span>
+                        </div>
+                        <span class="global-player-score">${item.score} Pkt</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getBannedUsers() {
+            return JSON.parse(localStorage.getItem('push_game_banned_users') || '[]');
+        }
+
+        function startBanCheckInterval() {
+            if (banCheckInterval) clearInterval(banCheckInterval);
+            banCheckInterval = setInterval(() => {
+                if (currentUser && windowFocused) {
+                    const bannedUsers = getBannedUsers();
+                    if (bannedUsers.includes(currentUser)) {
+                        clearInterval(banCheckInterval);
+                        currentUser = null;
+                        document.getElementById('loginScreen').classList.remove('hidden');
+                        document.getElementById('gameScreen').classList.remove('active');
+                        showMessage('🚫 Du wurdest gebannt! Deine Session wurde beendet.', 'error');
+                        document.getElementById('username').value = '';
+                        document.getElementById('password').value = '';
+                    }
+                }
+            }, 2000);
+        }
+
+        function stopBanCheckInterval() {
+            if (banCheckInterval) clearInterval(banCheckInterval);
+        }
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                showMessage('Bitte gib Benutzername und Passwort ein!', 'error');
+                return;
+            }
+
+            // Check if user is banned
+            const bannedUsers = getBannedUsers();
+            if (bannedUsers.includes(username)) {
+                showMessage('🚫 Du wurdest gebannt! Bitte kontaktiere den Admin.', 'error');
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                return;
+            }
+
+            const users = getUsers();
+
+            if (users[username]) {
+                if (users[username] === password) {
+                    currentUser = username;
+                    startGame();
+                    showMessage('✅ Erfolgreich angemeldet!', 'success');
+                } else {
+                    showMessage('❌ Passwort falsch!', 'error');
+                }
+            } else {
+                users[username] = password;
+                saveUsers(users);
+                currentUser = username;
+                startGame();
+                showMessage('✅ Account erstellt und angemeldet!', 'success');
+            }
+
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function startGame() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.add('active');
+            document.getElementById('displayUsername').textContent = currentUser;
+            
+            roundPoints = 0;
+            totalScore = 0;
+            roundCount = 0;
+            bestScores = getUserScores(currentUser);
+            
+            updateDisplay();
+            updateGlobalLeaderboard();
+            startBanCheckInterval();
+        }
+
+        function logout() {
+            stopBanCheckInterval();
+            currentUser = null;
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.remove('active');
+            showMessage('Du wurdest abgemeldet.', 'success');
+        }
+
+        function addPoints() {
+            if (!gameActive) return;
+
+            const points = Math.floor(Math.random() * 41) + 10;
+            
+            if (Math.random() < 0.1) {
+                totalScore = Math.max(0, totalScore - roundPoints);
+                showGameOver(`💥 Fehler! Du hast -${roundPoints} Punkte verloren!`, -roundPoints);
+            } else {
+                roundPoints += points;
+                updateDisplay();
+
+                if (roundPoints > 200) {
+                    document.getElementById('riskWarning').style.display = 'block';
+                    showMessage(`🔥 Krass! Du hast schon ${roundPoints} Punkte! Aber das Risiko steigt!`, 'warning');
+                }
+            }
+        }
+
+        function stopRound() {
+            if (roundPoints === 0) {
+                showMessage('Du musst mindestens einmal weitermachen!', 'error');
+                return;
+            }
+
+            totalScore += roundPoints;
+            roundCount++;
+            bestScores.push(roundPoints);
+            bestScores.sort((a, b) => b - a);
+            if (bestScores.length > 5) bestScores.pop();
+            
+            saveUserScores(currentUser, bestScores);
+            addGlobalScore(currentUser, totalScore);
+            updateGlobalLeaderboard();
+
+            showGameOver('✅ Klug gemacht! Du hast gestoppt!', roundPoints);
+        }
+
+        function showGameOver(message, earnedPoints) {
+            gameActive = false;
+            document.getElementById('activeGameScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').classList.add('show');
+            document.getElementById('gameOverMsg').textContent = message;
+            document.getElementById('finalRoundScore').textContent = Math.abs(earnedPoints);
+
+            const info = earnedPoints > 0 
+                ? `<div>✅ Du hast <strong>+${earnedPoints}</strong> Punkte verdient!</div><div>Gesamt: <strong>${totalScore}</strong> Punkte</div>`
+                : `<div>❌ Du hast <strong>${Math.abs(earnedPoints)}</strong> Punkte verloren!</div><div>Gesamt: <strong>${totalScore}</strong> Punkte</div>`;
+            
+            document.getElementById('gameOverExtraInfo').innerHTML = info;
+
+            roundPoints = 0;
+            document.getElementById('riskWarning').style.display = 'none';
+        }
+
+        function newRound() {
+            gameActive = true;
+            roundPoints = 0;
+            document.getElementById('activeGameScreen').style.display = 'block';
+            document.getElementById('gameOverScreen').classList.remove('show');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('roundPoints').textContent = roundPoints;
+            document.getElementById('totalScore').textContent = totalScore;
+            document.getElementById('roundCount').textContent = roundCount;
+
+            const leaderboardList = document.getElementById('leaderboardList');
+            if (bestScores.length > 0) {
+                leaderboardList.innerHTML = bestScores.map((score, idx) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const medal = medals[idx] || '';
+                    return `
+                        <div class="leaderboard-item">
+                            <span>${medal} ${idx + 1}. Platz</span>
+                            <span class="leaderboard-score">${score} Punkte</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message show ${type}`;
+            setTimeout(() => {
+                messageEl.classList.remove('show');
+            }, 3000);
+        }
+
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !currentUser && document.getElementById('password').value) {
+                login();
+            }
+        });
+
+        // Fokus-Tracking
+        window.addEventListener('focus', () => {
+            windowFocused = true;
+        });
+
+        window.addEventListener('blur', () => {
+            windowFocused = false;
+        });
+    </script>
+</body>
+</html>
